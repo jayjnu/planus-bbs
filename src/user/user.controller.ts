@@ -1,10 +1,10 @@
 import { from, throwError, of } from 'rxjs';
-import { map, flatMap, pluck, mergeMap } from 'rxjs/operators';
-import { RequestHandler } from 'express';
+import { map, flatMap, pluck, mergeMap, catchError } from 'rxjs/operators';
+import { RequestHandler, Request, Response, NextFunction } from 'express';
 import { pick, pipe, ifElse, isNil } from 'ramda';
 
-import User from './user.model';
-import { missingParamsError } from './user.errors';
+import User, { IUser } from './user.model';
+import { missingParamsError, notFoundError } from './user.errors';
 
 enum UserQueryParams {
   userId = 'user_id',
@@ -17,7 +17,7 @@ type PublicUserInfo = {
   user_name?: string;
 };
 
-const mapDBEntityToResponse = pipe(
+const mapDBEntityToUser = pipe(
   pick(['user_id', 'user_email', 'user_name']),
   (publicUser: PublicUserInfo) => ({
     id: publicUser.user_id,
@@ -27,44 +27,58 @@ const mapDBEntityToResponse = pipe(
   pick(['id', 'email', 'name'])
 );
 
+const toJSON = (req: Request, res: Response, next: NextFunction) => {
+  return {
+    next: (result: any) => res.json(result),
+    error: next
+  };
+};
+
+const extractBodyParamsToDBQuery = ({ user_name, user_id, user_pw, user_email }: IUser) => ({
+  user_name,
+  user_id,
+  user_pw,
+  user_email
+});
+
+const mapDBEntityToResponse = (status: number) => (res: { status: string; user: IUser }) => ({
+  status,
+  user: mapDBEntityToUser(res.user)
+});
+
+const checkUserId = ifElse(isNil, () => throwError(missingParamsError(UserQueryParams.userId)), id => of({ id }));
+
 export const getUser: RequestHandler = (req, res, next) => {
   req.query$
     .pipe(
       pluck(UserQueryParams.userId),
-      mergeMap(ifElse(isNil, () => throwError(missingParamsError(UserQueryParams.userId)), id => of({ id }))),
+      mergeMap(checkUserId),
       map(User.find),
       flatMap(from),
-      map((res = {}) => {
-        return {
-          status: 200,
-          user: mapDBEntityToResponse(res)
-        };
-      })
+      map(mapDBEntityToResponse(200))
     )
-    .subscribe({
-      next: user => res.json(user),
-      error: next
-    });
+    .subscribe(toJSON(req, res, next));
 };
 
 export const addUser: RequestHandler = (req, res, next) => {
   req.body$
     .pipe(
-      map(({ user_name, user_id, user_pw, user_email }) => ({
-        user_name,
-        user_id,
-        user_pw,
-        user_email
-      })),
+      map(extractBodyParamsToDBQuery),
       map(User.add),
       flatMap(from),
-      map(res => ({
-        status: res.status,
-        user: mapDBEntityToResponse(res.user)
-      }))
+      map(mapDBEntityToResponse(200))
     )
-    .subscribe({
-      next: result => res.json(result),
-      error: next
-    });
+    .subscribe(toJSON(req, res, next));
+};
+
+export const updateUser: RequestHandler = (req, res, next) => {
+  req.body$
+    .pipe(
+      map(extractBodyParamsToDBQuery),
+      map(User.update),
+      flatMap(from),
+      catchError(val => throwError(notFoundError(val))),
+      map(mapDBEntityToResponse(200))
+    )
+    .subscribe(toJSON(req, res, next));
 };
