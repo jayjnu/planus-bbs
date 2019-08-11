@@ -17,12 +17,14 @@ app.get('/', (req, res) => {
   res.json({ type: 'hello' });
 });
 
-app.use(((err, req, res, next) => {
+app.use(((err, req, res) => {
   if (err.error) {
     res.status(err.status);
-    res.json(err.error.message);
+    res.json({
+      status: err.status,
+      error: err.error.message
+    });
   } else {
-    console.error(err);
     res.json(err);
   }
 }) as ErrorRequestHandler);
