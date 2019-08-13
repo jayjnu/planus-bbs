@@ -2,6 +2,7 @@ import express from 'express';
 import rxify from './middlewares/rxify';
 import usersRouter from './routes/user';
 import { ErrorRequestHandler } from 'express';
+import httpLogger from 'morgan';
 
 const app = express();
 
@@ -9,6 +10,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(rxify());
+app.use(httpLogger('combined'));
 
 // map routes
 app.use('/user', usersRouter());
