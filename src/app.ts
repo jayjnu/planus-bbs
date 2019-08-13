@@ -17,7 +17,7 @@ app.get('/', (req, res) => {
   res.json({ type: 'hello' });
 });
 
-app.use(((err, req, res) => {
+app.use(((err, req, res, next) => {
   if (err.error) {
     res.status(err.status);
     res.json({
