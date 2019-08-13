@@ -1,5 +1,5 @@
 export interface FindQuery {
-  id: string;
+  user_id: string;
 }
 
 export interface GeneralInsertQuery {
@@ -24,7 +24,7 @@ export interface IUser {
 const fakeDb: { [id: string]: IUser } = {};
 
 export default {
-  find: (query: FindQuery): Promise<GeneralResponse | never> => Promise.resolve({ status: 'success', user: fakeDb[query.id] }),
+  find: (query: FindQuery): Promise<GeneralResponse | never> => Promise.resolve({ status: 'success', user: fakeDb[query.user_id] }),
   add: (query: GeneralInsertQuery): Promise<GeneralResponse> => {
     fakeDb[query.user_id] = query;
     return Promise.resolve({ status: 'success', user: query });
