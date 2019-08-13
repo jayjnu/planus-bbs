@@ -5,6 +5,7 @@ declare global {
     export interface Request {
       query$: Observable<any>;
       body$: Observable<any>;
+      user$: Observable<any>;
     }
   }
 }
