@@ -8,7 +8,13 @@ import * as dbConf from './config/db';
 
 const app = express();
 
-mongoose.connect(dbConf.dbURL, dbConf.options);
+mongoose.connect(dbConf.dbURL, dbConf.options, err => {
+  if (err) {
+    console.log(err);
+    mongoose.disconnect();
+    process.exit(1);
+  }
+});
 
 // register middleware
 app.use(express.json());
