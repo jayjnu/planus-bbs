@@ -7,3 +7,8 @@ export const notFoundError = (msg: string) => ({
   status: 400,
   error: new Error(msg)
 });
+
+export const duplicateUserError = (err: Error) => ({
+  status: 400,
+  error: err
+});
