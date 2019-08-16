@@ -15,7 +15,6 @@ mongoose.connect(dbConf.dbURL, dbConf.options, err => {
     process.exit(1);
   }
 });
-
 // register middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
