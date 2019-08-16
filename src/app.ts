@@ -1,10 +1,14 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import rxify from './middlewares/rxify';
 import usersRouter from './routes/user';
 import { ErrorRequestHandler } from 'express';
 import httpLogger from 'morgan';
+import * as dbConf from './config/db';
 
 const app = express();
+
+mongoose.connect(dbConf.dbURL, dbConf.options);
 
 // register middleware
 app.use(express.json());
